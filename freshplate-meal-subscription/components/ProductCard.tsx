@@ -12,13 +12,12 @@ interface ProductCardProps {
   product: Product;
   isAdmin: boolean;
   onEdit: () => void;
-  onDelete: () => void;
   onAddToCart: (quantity: number) => void;
   onViewProduct: () => void;
   hasActiveSubscription: boolean;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, isAdmin, onEdit, onDelete, onAddToCart, onViewProduct, hasActiveSubscription }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, isAdmin, onEdit, onAddToCart, onViewProduct, hasActiveSubscription }) => {
   const [quantity, setQuantity] = useState(1);
 
   const handleQuantityChange = (amount: number) => {
@@ -28,6 +27,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, isAdmin, onEd
   const handleAddToCartClick = () => {
       onAddToCart(quantity);
   };
+
+  const cardDescription = product.description.split('(Approx.')[0].trim();
+  const displayDescription = !isAdmin && cardDescription.length > 90 
+    ? cardDescription.substring(0, 87) + '...' 
+    : cardDescription;
 
   return (
     <div className="group relative bg-white border border-slate-200 rounded-lg flex flex-col overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300">
@@ -53,11 +57,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, isAdmin, onEd
             {product.name}
           </button>
         </h3>
-        <p className="text-sm text-slate-500 flex-1">{product.description}</p>
+        <p className="text-sm text-slate-500 flex-1">{displayDescription}</p>
         <div className="flex justify-between items-center pt-2">
             <p className="text-xl font-semibold text-slate-900">${product.price.toFixed(2)}</p>
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800`}>
-                {product.category}
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800`}>
+                ~{product.calories} Cal
             </span>
         </div>
       </div>
@@ -87,14 +91,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, isAdmin, onEd
         </div>
       )}
       {isAdmin && (
-        <div className="grid grid-cols-2 border-t border-slate-200">
+        <div className="border-t border-slate-200">
           <button onClick={onEdit} className="w-full bg-slate-100 text-slate-700 font-semibold py-3 px-4 flex items-center justify-center space-x-2 hover:bg-yellow-100 hover:text-yellow-800 transition-colors">
             <PencilIcon className="w-5 h-5" />
-            <span>Edit</span>
-          </button>
-          <button onClick={onDelete} className="w-full bg-red-50 text-red-700 font-semibold py-3 px-4 flex items-center justify-center space-x-2 hover:bg-red-100 hover:text-red-900 transition-colors border-l border-slate-200">
-            <TrashIcon className="w-5 h-5" />
-            <span>Delete</span>
+            <span>Update</span>
           </button>
         </div>
       )}

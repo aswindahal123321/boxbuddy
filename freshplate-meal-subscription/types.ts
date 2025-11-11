@@ -5,6 +5,7 @@ export interface Product {
   price: number;
   imageUrl: string;
   category: 'Vegan' | 'Chicken' | 'Beef' | 'Fish';
+  calories: number;
 }
 
 export interface CartItem extends Product {

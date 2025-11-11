@@ -69,7 +69,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ cart, onPlaceOrder }
                 <input type="text" name="cvc" id="cvc" required placeholder="123" className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm" />
               </div>
             </div>
-             <p className="text-xs text-center text-slate-500 pt-2">Demo checkout via Paystrip. No real payment will be processed.</p>
+             <p className="text-xs text-center text-slate-500 pt-2">This is a demo checkout. No real payment will be processed.</p>
             <button
               type="submit"
               className="w-full mt-4 flex justify-center items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-emerald-600 hover:bg-emerald-700"

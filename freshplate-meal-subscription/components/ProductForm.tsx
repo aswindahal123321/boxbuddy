@@ -13,6 +13,7 @@ const emptyProduct: Omit<Product, 'id'> = {
   price: 0,
   imageUrl: '',
   category: 'Chicken',
+  calories: 0,
 };
 
 export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) => {
@@ -27,7 +28,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: name === 'price' ? parseFloat(value) : value }));
+    setFormData(prev => ({ ...prev, [name]: (name === 'price' || name === 'calories') ? parseFloat(value) : value }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,10 +65,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
           <label htmlFor="description" className="block text-sm font-medium text-slate-700">Description</label>
           <textarea name="description" id="description" value={formData.description} onChange={handleChange} required rows={3} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm" />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
             <div>
                 <label htmlFor="price" className="block text-sm font-medium text-slate-700">Price</label>
                 <input type="number" name="price" id="price" value={formData.price} onChange={handleChange} required step="0.01" className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm" />
+            </div>
+             <div>
+                <label htmlFor="calories" className="block text-sm font-medium text-slate-700">Calories</label>
+                <input type="number" name="calories" id="calories" value={formData.calories} onChange={handleChange} required step="1" className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm" />
             </div>
             <div>
                 <label htmlFor="category" className="block text-sm font-medium text-slate-700">Category</label>

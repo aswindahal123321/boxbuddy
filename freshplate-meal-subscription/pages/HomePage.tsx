@@ -5,24 +5,24 @@ import type { Product } from '../types';
 
 interface HomePageProps {
   products: Product[];
-  activeSubscription: any;
+  hasActiveSubscription: boolean;
   addToCart: (product: Product, quantity: number) => void;
   onViewProduct: (product: Product) => void;
+  setCurrentPage: (page: string) => void;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ products, activeSubscription, addToCart, onViewProduct }) => {
+export const HomePage: React.FC<HomePageProps> = ({ products, hasActiveSubscription, addToCart, onViewProduct, setCurrentPage }) => {
   return (
     <>
-      <Hero />
+      <Hero setCurrentPage={setCurrentPage} />
       <ProductList 
         products={products}
         isAdmin={false} // ProductList on homepage is always for users
         onEdit={() => {}} // Not used in user view
-        onDelete={() => {}} // Not used in user view
         onCreate={() => {}} // Not used in user view
         onAddToCart={addToCart}
         onViewProduct={onViewProduct}
-        hasActiveSubscription={!!activeSubscription}
+        hasActiveSubscription={hasActiveSubscription}
       />
     </>
   );
