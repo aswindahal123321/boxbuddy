@@ -1,5 +1,5 @@
 {
-  "name": "FreshPlate Meal Subscription",
-  "description": "An e-commerce meal subscription website where users can view products, add meals to a cart, subscribe to a plan, and track their orders. Includes a full admin dashboard for managing products and order statuses.",
+  "name": "BoxBuddy Meal Subscription",
+  "description": "An e-commerce meal subscription website where users can view delicious meals with detailed nutritional info, subscribe to a plan, and track their orders. Includes a full admin dashboard for managing products and order statuses.",
   "requestFramePermissions": []
 }

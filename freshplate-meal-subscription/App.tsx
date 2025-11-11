@@ -13,6 +13,7 @@ import { SignUpPage } from './pages/SignUpPage';
 import { TrackOrderPage } from './pages/TrackOrderPage';
 import { UserDashboardPage } from './pages/UserDashboardPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
+import { PlaceholderPage } from './pages/PlaceholderPage';
 import { INITIAL_PRODUCTS, INITIAL_USERS, ADMIN_USER } from './constants';
 import type { Product, CartItem, Order, Subscription, OrderStatus, User } from './types';
 
@@ -24,10 +25,12 @@ const App: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [currentPage, setCurrentPage] = useState('home'); // home, cart, checkout, confirmation, admin, login, signup, track, dashboard, productDetail
+  const [currentPage, setCurrentPage] = useState('home'); // home, cart, checkout, confirmation, admin, login, signup, track, dashboard, productDetail, about, pricing, gifting, blog, careers, privacy, terms
   const [pageBeforeLogin, setPageBeforeLogin] = useState<string | null>(null);
   const [orderToTrackRef, setOrderToTrackRef] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [isDeleteAccountConfirmOpen, setIsDeleteAccountConfirmOpen] = useState(false);
+
 
   // Auth State
   const [users, setUsers] = useState<User[]>(INITIAL_USERS);
@@ -36,15 +39,18 @@ const App: React.FC = () => {
   // App Data State
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [activeSubscription, setActiveSubscription] = useState<Subscription | null>(null);
   const [confirmedOrder, setConfirmedOrder] = useState<Order | null>(null);
 
   const isAdmin = currentUser?.role === 'admin';
+  const hasActiveSubscription = !!currentUser && !!activeSubscription;
   
   // Effect to check for expired subscription on navigation
   useEffect(() => {
     if (activeSubscription && new Date() > new Date(activeSubscription.endDate)) {
       alert("Your monthly subscription has expired. You can now place a new order.");
+      setSubscriptions(subs => subs.filter(s => s.id !== activeSubscription.id));
       setActiveSubscription(null);
     }
   }, [currentPage, activeSubscription]);
@@ -69,6 +75,22 @@ const App: React.FC = () => {
     const foundUser = users.find(u => u.email === email && u.password === password);
     if (foundUser) {
       setCurrentUser(foundUser);
+      
+      // Find and set active subscription for the logged-in user
+      const userOrders = orders.filter(o => o.userId === foundUser.id);
+      const userOrderIds = userOrders.map(o => o.id);
+      const userSubscriptions = subscriptions.filter(s => userOrderIds.includes(s.orderId));
+      
+      const stillActiveSubscriptions = userSubscriptions.filter(s => new Date() < new Date(s.endDate));
+
+      if (stillActiveSubscriptions.length > 0) {
+        // Get the most recent one
+        const latestActiveSub = stillActiveSubscriptions.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())[0];
+        setActiveSubscription(latestActiveSub);
+      } else {
+        setActiveSubscription(null);
+      }
+      
       navigate(pageBeforeLogin || 'home');
       setPageBeforeLogin(null);
       return true;
@@ -98,20 +120,32 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
     setCurrentUser(null);
+    setActiveSubscription(null);
     navigate('home');
   };
 
-  const handleDeleteUser = (userId: number) => {
-    if (window.confirm('Are you sure you want to delete this user? This will also cancel any active subscription they have. This action is irreversible.')) {
-      // Check if the user being deleted has the current active subscription
-      const orderForSubscription = orders.find(o => o.id === activeSubscription?.orderId);
-      if (orderForSubscription?.userId === userId) {
-        setActiveSubscription(null);
-      }
-      setUsers(users.filter(u => u.id !== userId));
-      // Note: We are keeping orders for historical data, just removing the user login.
-      alert('User deleted successfully.');
+  const requestDeleteAccount = () => {
+    setIsDeleteAccountConfirmOpen(true);
+  };
+
+  const handleConfirmDeleteAccount = () => {
+    if (currentUser) {
+        if (activeSubscription) {
+            setSubscriptions(prevSubs => prevSubs.filter(sub => sub.id !== activeSubscription.id));
+            setActiveSubscription(null);
+        }
+        setUsers(users.filter(u => u.id !== currentUser.id));
+        alert('Your account has been deleted successfully. We are sorry to see you go.');
+        
+        // Reset state and navigate
+        setIsDeleteAccountConfirmOpen(false);
+        setCurrentUser(null);
+        navigate('home');
     }
+  };
+
+  const handleCloseDeleteAccountModal = () => {
+      setIsDeleteAccountConfirmOpen(false);
   };
 
 
@@ -133,12 +167,6 @@ const App: React.FC = () => {
       setProducts([...products, { ...product, id: Date.now() }]);
     }
     handleCloseModal();
-  };
-
-  const handleDeleteProduct = (productId: number) => {
-    if (window.confirm('Are you sure you want to delete this meal?')) {
-      setProducts(prevProducts => prevProducts.filter(p => p.id !== productId));
-    }
   };
 
   const handleViewProduct = (product: Product) => {
@@ -186,6 +214,7 @@ const App: React.FC = () => {
   const handleConfirmCancelSubscription = () => {
     if (activeSubscription) {
       updateOrderStatus(activeSubscription.orderId, 'Refund Requested');
+      setSubscriptions(prevSubs => prevSubs.filter(sub => sub.id !== activeSubscription.id));
       setActiveSubscription(null);
     }
     setShowCancelConfirm(false);
@@ -208,7 +237,7 @@ const App: React.FC = () => {
     const newOrder: Order = {
       id: Date.now(),
       userId: currentUser.id,
-      referenceNumber: `FP-${Date.now().toString().slice(-6)}`,
+      referenceNumber: `BB-${Date.now().toString().slice(-6)}`,
       items: [...cart],
       totalAmount,
       orderDate: new Date(),
@@ -228,6 +257,7 @@ const App: React.FC = () => {
     };
 
     setOrders([...orders, newOrder]);
+    setSubscriptions([...subscriptions, newSubscription]);
     setActiveSubscription(newSubscription);
     setCart([]);
     setConfirmedOrder(newOrder);
@@ -243,6 +273,7 @@ const App: React.FC = () => {
         if (activeSubscription?.orderId === orderId) {
             setActiveSubscription(null);
         }
+        setSubscriptions(prevSubs => prevSubs.filter(sub => sub.orderId !== orderId));
         setOrders(orders.filter(o => o.id !== orderId));
         alert('Order deleted successfully.');
     }
@@ -259,24 +290,17 @@ const App: React.FC = () => {
 
 
   const renderPage = () => {
-    // If admin is logged in, ONLY show admin dashboard.
-    // Logout will set currentUser to null, so isAdmin becomes false, and this block won't be entered.
-    // The subsequent navigation to 'home' by handleLogout will then render the HomePage. This flow is correct.
     if (isAdmin) {
       return <AdminDashboard 
         products={products}
         orders={orders}
-        users={users.filter(u => u.role !== 'admin')}
         onEditProduct={handleOpenModal}
-        onDeleteProduct={handleDeleteProduct}
         onCreateProduct={() => handleOpenModal(null)}
         onUpdateStatus={updateOrderStatus}
-        onDeleteUser={handleDeleteUser}
         onDeleteOrder={handleDeleteOrder}
       />;
     }
 
-    // Protected Routes for standard users
     if ((currentPage === 'checkout' || currentPage === 'dashboard' || currentPage === 'track') && !currentUser) {
         setPageBeforeLogin(currentPage);
         return <LoginPage onLogin={handleLogin} setCurrentPage={navigate} />;
@@ -311,6 +335,7 @@ const App: React.FC = () => {
             activeSubscription={activeSubscription}
             userOrders={orders.filter(o => o.userId === currentUser?.id)}
             onCancelSubscription={requestSubscriptionCancel}
+            onDeleteAccount={requestDeleteAccount}
             setCurrentPage={navigate}
             onTrackOrder={handleTrackOrderFromDashboard}
         />;
@@ -318,16 +343,31 @@ const App: React.FC = () => {
         return <ProductDetailPage 
           product={selectedProduct}
           onAddToCart={addToCart}
-          hasActiveSubscription={!!activeSubscription}
+          hasActiveSubscription={hasActiveSubscription}
           onBack={() => navigate('home')}
         />;
+      case 'about':
+        return <PlaceholderPage title="About BoxBuddy" message="We are passionate about making healthy eating easy and delicious for everyone. Our chefs work tirelessly to create exciting new recipes with the freshest ingredients, delivered right to your door." onNavigate={navigate} />;
+      case 'pricing':
+          return <PlaceholderPage title="Our Pricing" message="Simple and transparent. One weekly price for a box of your chosen meals. No hidden fees, cancel anytime. Check out our meal selection to see individual meal prices that contribute to your weekly total." onNavigate={navigate}/>;
+      case 'gifting':
+          return <PlaceholderPage title="Gift a Box" message="Give the gift of health and convenience. Our gift cards can be redeemed for any of our meal plans. Perfect for new parents, busy professionals, or anyone who deserves a break from cooking!" onNavigate={navigate}/>;
+      case 'blog':
+        return <PlaceholderPage title="BoxBuddy Blog" message="Coming Soon! Get ready for delicious recipes, nutritional tips, and behind-the-scenes stories from our kitchen." onNavigate={navigate} />;
+      case 'careers':
+        return <PlaceholderPage title="Careers at BoxBuddy" message="Want to join our mission? We're always looking for passionate people to join our team. Check back soon for job openings." onNavigate={navigate}/>;
+      case 'privacy':
+        return <PlaceholderPage title="Privacy Policy" message="Your privacy is important to us. This page will detail how we collect, use, and protect your personal information. (Content to be added)" onNavigate={navigate} />;
+      case 'terms':
+        return <PlaceholderPage title="Terms of Service" message="This page will outline the terms and conditions for using our website and services. (Content to be added)" onNavigate={navigate} />;
       case 'home':
       default:
         return <HomePage 
           products={products}
-          activeSubscription={activeSubscription}
+          hasActiveSubscription={hasActiveSubscription}
           addToCart={addToCart}
           onViewProduct={handleViewProduct}
+          setCurrentPage={navigate}
         />;
     }
   }
@@ -343,7 +383,7 @@ const App: React.FC = () => {
       <main className="flex-grow">
         {renderPage()}
       </main>
-      <Footer />
+      <Footer setCurrentPage={navigate} />
       {isModalOpen && isAdmin && (
         <Modal onClose={handleCloseModal}>
           <ProductForm 
@@ -375,6 +415,30 @@ const App: React.FC = () => {
                 </button>
             </div>
           </div>
+        </Modal>
+      )}
+      {isDeleteAccountConfirmOpen && (
+        <Modal onClose={handleCloseDeleteAccountModal}>
+            <div className="text-center p-4">
+            <h2 className="text-2xl font-bold mb-4 text-slate-800">Delete Your Account?</h2>
+            <p className="text-slate-600 mb-8">
+                Are you sure you want to permanently delete your account? This action is irreversible and will cancel any active subscription.
+            </p>
+            <div className="flex justify-center space-x-4">
+                <button 
+                    onClick={handleCloseDeleteAccountModal}
+                    className="bg-white py-2 px-6 border border-slate-300 rounded-md shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+                >
+                    Keep Account
+                </button>
+                <button 
+                    onClick={handleConfirmDeleteAccount}
+                    className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                >
+                    Yes, Delete It
+                </button>
+            </div>
+            </div>
         </Modal>
       )}
     </div>

@@ -5,6 +5,7 @@ interface UserDashboardPageProps {
   activeSubscription: Subscription | null;
   userOrders: Order[];
   onCancelSubscription: () => void;
+  onDeleteAccount: () => void;
   setCurrentPage: (page: string) => void;
   onTrackOrder: (referenceNumber: string) => void;
 }
@@ -21,7 +22,7 @@ const getStatusColor = (status: OrderStatus) => {
   }
 };
 
-export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({ activeSubscription, userOrders, onCancelSubscription, setCurrentPage, onTrackOrder }) => {
+export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({ activeSubscription, userOrders, onCancelSubscription, onDeleteAccount, setCurrentPage, onTrackOrder }) => {
   const [activeTab, setActiveTab] = useState('subscription');
   
   const subscriptionEndDate = activeSubscription ? new Date(activeSubscription.endDate) : null;
@@ -57,6 +58,16 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({ activeSubs
           >
             Order History ({userOrders.length})
           </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`${
+              activeTab === 'settings'
+                ? 'border-emerald-500 text-emerald-600'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            Account Settings
+          </button>
         </nav>
       </div>
 
@@ -87,18 +98,19 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({ activeSubs
                   <p className="mt-2 text-sm text-slate-600">
                     Subscriptions can be cancelled for a refund of the remaining 3 weeks only within the first 7 days of activation. After this period, cancellation is not possible.
                   </p>
-                  <button
-                    onClick={onCancelSubscription}
-                    disabled={!isCancellable}
-                    className="mt-4 w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:bg-slate-400 disabled:cursor-not-allowed"
-                    title={!isCancellable ? "Cancellation period has ended." : "Cancel your subscription"}
-                  >
-                    Cancel Subscription
-                  </button>
-                  {!isCancellable && (
-                    <p className="mt-2 text-sm text-red-600">
-                      The 7-day cancellation window for this subscription has passed.
-                    </p>
+                  {isCancellable ? (
+                     <button
+                        onClick={onCancelSubscription}
+                        className="mt-4 w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      >
+                        Request Refund & Cancel
+                      </button>
+                  ) : (
+                    <div className="mt-4 p-4 bg-yellow-50 border border-yellow-300 rounded-md">
+                        <p className="text-sm text-yellow-800 font-medium">
+                            The 7-day cancellation and refund window for this subscription has passed.
+                        </p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -156,6 +168,24 @@ export const UserDashboardPage: React.FC<UserDashboardPageProps> = ({ activeSubs
               </table>
             </div>
           </div>
+        )}
+
+        {activeTab === 'settings' && (
+             <div>
+                <h2 className="text-2xl font-bold tracking-tight text-slate-800 mb-6">Account Settings</h2>
+                <div className="p-6 bg-white rounded-lg shadow-md border border-red-200">
+                    <h4 className="font-medium text-slate-800">Delete Account</h4>
+                    <p className="mt-2 text-sm text-slate-600">
+                        Once you delete your account, there is no going back. Please be certain. This will cancel any active subscription and you will no longer be able to log in.
+                    </p>
+                    <button
+                        onClick={onDeleteAccount}
+                        className="mt-4 w-full sm:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    >
+                        Permanently Delete My Account
+                    </button>
+                </div>
+            </div>
         )}
       </div>
     </div>

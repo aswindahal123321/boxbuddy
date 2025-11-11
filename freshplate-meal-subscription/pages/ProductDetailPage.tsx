@@ -59,9 +59,14 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ product, o
 
         {/* Product Details */}
         <div className="flex flex-col justify-center">
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800 self-start mb-2`}>
-            {product.category}
-          </span>
+          <div className="flex items-center gap-4 mb-2">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800 self-start`}>
+                {product.category}
+            </span>
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-slate-100 text-slate-800 self-start`}>
+                ~{product.calories} Cal
+            </span>
+          </div>
           <h1 className="text-4xl font-extrabold text-slate-900">{product.name}</h1>
           <p className="text-3xl font-semibold text-slate-800 mt-4">${product.price.toFixed(2)}</p>
           <p className="mt-6 text-slate-600 text-lg leading-relaxed">{product.description}</p>

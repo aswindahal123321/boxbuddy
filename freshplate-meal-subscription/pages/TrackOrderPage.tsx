@@ -62,7 +62,7 @@ export const TrackOrderPage: React.FC<TrackOrderPageProps> = ({ allOrders, initi
               type="text"
               value={trackingNumber}
               onChange={(e) => setTrackingNumber(e.target.value)}
-              placeholder="Enter reference number (e.g., FP-123456)"
+              placeholder="Enter reference number (e.g., BB-123456)"
               className="flex-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm"
             />
             <button

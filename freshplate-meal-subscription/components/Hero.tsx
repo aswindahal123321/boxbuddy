@@ -1,6 +1,23 @@
 import React from 'react';
 
-export const Hero: React.FC = () => {
+interface HeroProps {
+  setCurrentPage: (page: string) => void;
+}
+
+
+export const Hero: React.FC<HeroProps> = ({ setCurrentPage }) => {
+  const handleViewPlansClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    setCurrentPage('home');
+    // Use a timeout to ensure the home page has rendered before scrolling
+    setTimeout(() => {
+        const menuElement = document.getElementById('menu');
+        if (menuElement) {
+            menuElement.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, 0);
+  };
+  
   return (
     <div className="relative bg-slate-800">
       <div className="absolute inset-0">
@@ -20,7 +37,8 @@ export const Hero: React.FC = () => {
         </p>
         <div className="mt-10">
           <a
-            href="#"
+            href="#menu"
+            onClick={handleViewPlansClick}
             className="bg-emerald-500 text-white font-semibold px-8 py-3 rounded-lg hover:bg-emerald-600 transition-transform hover:scale-105 inline-block"
           >
             View Our Plans
