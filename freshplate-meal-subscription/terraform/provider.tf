@@ -1,4 +1,7 @@
-# Specifies that we are using the AWS provider
+####################################################
+# TERRAFORM PROVIDER REQUIREMENTS
+####################################################
+
 terraform {
   required_providers {
     aws = {
@@ -8,8 +11,13 @@ terraform {
   }
 }
 
-# Configure the AWS Provider with your desired region
-# Terraform will use the credentials configured in your AWS CLI
+####################################################
+# AWS PROVIDER CONFIGURATION
+####################################################
+
 provider "aws" {
   region = var.aws_region
+
+  # Still valid in AWS Academy VocLabs
+  skip_requesting_account_id = true
 }
