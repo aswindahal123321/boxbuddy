@@ -51,3 +51,27 @@ variable "frontend_bucket_name" {
     error_message = "frontend_bucket_name must contain only lowercase letters, numbers, dots, and hyphens (S3 bucket naming rules)."
   }
 }
+
+
+variable "lambda_artifact_bucket" {
+  description = "S3 bucket that stores zipped Lambda bundles."
+  type        = string
+}
+
+variable "jwt_secret" {
+  description = "Secret string used for signing auth tokens."
+  type        = string
+  sensitive   = true
+}
+
+variable "users_table_name_override" {
+  description = "Optional override for the users DynamoDB table name."
+  type        = string
+  default     = ""
+}
+
+variable "orders_table_name_override" {
+  description = "Optional override for the orders DynamoDB table name."
+  type        = string
+  default     = ""
+}

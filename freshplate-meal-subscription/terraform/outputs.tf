@@ -19,3 +19,33 @@ output "cloudfront_oai" {
   description = "CloudFront Origin Access Identity to be used in S3 bucket policy"
   value       = aws_cloudfront_origin_access_identity.oai.cloudfront_access_identity_path
 }
+
+output "users_table_name" {
+  description = "DynamoDB table storing user profiles"
+  value       = aws_dynamodb_table.users.name
+}
+
+output "orders_table_name" {
+  description = "DynamoDB table storing orders and subscriptions"
+  value       = aws_dynamodb_table.orders.name
+}
+
+output "api_endpoint" {
+  description = "Invoke URL for the HTTP API"
+  value       = aws_apigatewayv2_api.http.api_endpoint
+}
+
+output "lambda_role_arn" {
+  description = "IAM role assumed by Lambda functions"
+  value       = aws_iam_role.lambda_exec.arn
+}
+
+output "users_table_name" {
+  description = "DynamoDB table storing user records."
+  value       = aws_dynamodb_table.users.name
+}
+
+output "orders_table_name" {
+  description = "DynamoDB table storing orders/subscriptions."
+  value       = aws_dynamodb_table.orders.name
+}

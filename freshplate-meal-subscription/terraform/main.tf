@@ -61,3 +61,196 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     cloudfront_default_certificate = true
   }
 }
+
+resource "aws_dynamodb_table" "users" {
+  name         = var.users_table_name_override != "" ? var.users_table_name_override : "${var.app_name}-users"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "pk"
+  range_key    = "sk"
+
+  attribute {
+    name = "pk"
+    type = "S"
+  }
+  attribute {
+    name = "sk"
+    type = "S"
+  }
+  attribute {
+    name = "gsi1pk"
+    type = "S"
+  } # email lookup
+
+  global_secondary_index {
+    name            = "gsi1"
+    hash_key        = "gsi1pk"
+    projection_type = "ALL"
+  }
+}
+
+resource "aws_dynamodb_table" "orders" {
+  name         = var.orders_table_name_override != "" ? var.orders_table_name_override : "${var.app_name}-orders"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "pk"
+  range_key    = "sk"
+
+  attribute {
+    name = "pk"
+    type = "S"
+  }
+  attribute {
+    name = "sk"
+    type = "S"
+  }
+  attribute {
+    name = "gsi1pk"
+    type = "S"
+  } # order lookup (e.g., ORDER#<id>)
+
+  global_secondary_index {
+    name            = "gsi1"
+    hash_key        = "gsi1pk"
+    projection_type = "ALL"
+  }
+}
+
+locals {
+  lambda_functions = {
+    signup      = { source = "${path.module}/../backend/dist/signup.zip" }
+    login       = { source = "${path.module}/../backend/dist/login.zip" }
+    me          = { source = "${path.module}/../backend/dist/me.zip" }
+    createOrder = { source = "${path.module}/../backend/dist/createOrder.zip" }
+    listOrders  = { source = "${path.module}/../backend/dist/listOrders.zip" }
+  }
+
+  api_routes = {
+    "POST /auth/signup" = "signup"
+    "POST /auth/login"  = "login"
+    "GET /users/me"     = "me"
+    "POST /orders"      = "createOrder"
+    "GET /orders"       = "listOrders"
+  }
+}
+
+data "aws_iam_policy_document" "lambda_assume_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "lambda_exec" {
+  name               = "${var.app_name}-lambda-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+}
+
+data "aws_iam_policy_document" "lambda_permissions" {
+  statement {
+    actions = [
+      "dynamodb:BatchGetItem",
+      "dynamodb:BatchWriteItem",
+      "dynamodb:DeleteItem",
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:Query",
+      "dynamodb:Scan",
+      "dynamodb:UpdateItem"
+    ]
+    resources = [
+      aws_dynamodb_table.users.arn,
+      "${aws_dynamodb_table.users.arn}/index/*",
+      aws_dynamodb_table.orders.arn,
+      "${aws_dynamodb_table.orders.arn}/index/*"
+    ]
+  }
+
+  statement {
+    actions   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+    resources = ["arn:aws:logs:${var.aws_region}:*:log-group:/aws/lambda/*"]
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_policy" {
+  role   = aws_iam_role.lambda_exec.id
+  policy = data.aws_iam_policy_document.lambda_permissions.json
+}
+
+resource "aws_s3_object" "lambda_artifacts" {
+  for_each = local.lambda_functions
+
+  bucket = var.lambda_artifact_bucket
+  key    = "lambda/${each.key}.zip"
+  source = each.value.source
+  etag   = filemd5(each.value.source)
+}
+
+resource "aws_lambda_function" "api" {
+  for_each = local.lambda_functions
+
+  function_name    = "${var.app_name}-${each.key}"
+  role             = aws_iam_role.lambda_exec.arn
+  runtime          = "nodejs20.x"
+  handler          = "index.handler"
+  source_code_hash = filebase64sha256(each.value.source)
+  s3_bucket        = var.lambda_artifact_bucket
+  s3_key           = aws_s3_object.lambda_artifacts[each.key].key
+  architectures    = ["arm64"]
+  timeout          = 10
+
+  environment {
+    variables = {
+      USERS_TABLE  = aws_dynamodb_table.users.name
+      ORDERS_TABLE = aws_dynamodb_table.orders.name
+      JWT_SECRET   = var.jwt_secret
+    }
+  }
+}
+
+resource "aws_apigatewayv2_api" "http" {
+  name          = "${var.app_name}-http-api"
+  protocol_type = "HTTP"
+
+  cors_configuration {
+    allow_credentials = false
+    allow_headers     = ["content-type", "authorization"]
+    allow_methods     = ["GET", "POST", "OPTIONS"]
+    allow_origins     = ["*"]
+  }
+}
+
+resource "aws_apigatewayv2_stage" "default" {
+  api_id      = aws_apigatewayv2_api.http.id
+  name        = "$default"
+  auto_deploy = true
+}
+
+resource "aws_apigatewayv2_integration" "lambda" {
+  for_each = local.lambda_functions
+
+  api_id                 = aws_apigatewayv2_api.http.id
+  integration_type       = "AWS_PROXY"
+  integration_method     = "POST"
+  integration_uri        = aws_lambda_function.api[each.key].invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "api" {
+  for_each = local.api_routes
+
+  api_id    = aws_apigatewayv2_api.http.id
+  route_key = each.key
+  target    = "integrations/${aws_apigatewayv2_integration.lambda[each.value].id}"
+}
+
+resource "aws_lambda_permission" "api_gateway" {
+  for_each = local.lambda_functions
+
+  statement_id  = "AllowAPIGatewayInvoke-${each.key}"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.api[each.key].function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.http.execution_arn}/*/*"
+}
