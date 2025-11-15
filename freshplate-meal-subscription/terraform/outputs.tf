@@ -39,13 +39,3 @@ output "lambda_role_arn" {
   description = "IAM role assumed by Lambda functions"
   value       = aws_iam_role.lambda_exec.arn
 }
-
-output "users_table_name" {
-  description = "DynamoDB table storing user records."
-  value       = aws_dynamodb_table.users.name
-}
-
-output "orders_table_name" {
-  description = "DynamoDB table storing orders/subscriptions."
-  value       = aws_dynamodb_table.orders.name
-}
