@@ -17,4 +17,4 @@ COPY package*.json ./
 RUN npm install --omit=dev
 ENV PORT=8080
 EXPOSE 8080
-CMD ["node", "dist/server/index.mjs"]
+CMD ["node", "dist/server/index.cjs"]
