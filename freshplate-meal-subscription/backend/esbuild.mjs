@@ -21,4 +21,15 @@ await Promise.all(
   )
 );
 
-console.log("Bundled handlers:", handlers.join(", "));
+await build({
+  entryPoints: ["src/server.ts"],
+  outfile: "dist/server/index.cjs",
+  bundle: true,
+  platform: "node",
+  format: "cjs",
+  target: "node20",
+  sourcemap: false,
+  external: [],
+});
+
+console.log("Bundled handlers and server:", [...handlers, "server"].join(", "));

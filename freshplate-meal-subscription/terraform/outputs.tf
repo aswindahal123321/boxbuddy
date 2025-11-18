@@ -30,12 +30,12 @@ output "orders_table_name" {
   value       = aws_dynamodb_table.orders.name
 }
 
-output "api_endpoint" {
-  description = "Invoke URL for the HTTP API"
-  value       = aws_apigatewayv2_api.http.api_endpoint
-}
-
 output "lambda_role_arn" {
   description = "IAM role assumed by Lambda functions"
   value       = aws_iam_role.lambda_exec.arn
+}
+
+output "lambda_function_urls" {
+  description = "Public function URLs for each Lambda handler"
+  value       = { for name, url in aws_lambda_function_url.api : name => url.function_url }
 }

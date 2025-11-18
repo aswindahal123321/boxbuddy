@@ -122,14 +122,6 @@ locals {
     createOrder = { source = "${path.module}/../backend/dist/createOrder.zip" }
     listOrders  = { source = "${path.module}/../backend/dist/listOrders.zip" }
   }
-
-  api_routes = {
-    "POST /auth/signup" = "signup"
-    "POST /auth/login"  = "login"
-    "GET /users/me"     = "me"
-    "POST /orders"      = "createOrder"
-    "GET /orders"       = "listOrders"
-  }
 }
 
 data "aws_iam_policy_document" "lambda_assume_role" {
@@ -209,48 +201,16 @@ resource "aws_lambda_function" "api" {
   }
 }
 
-resource "aws_apigatewayv2_api" "http" {
-  name          = "${var.app_name}-http-api"
-  protocol_type = "HTTP"
+resource "aws_lambda_function_url" "api" {
+  for_each = local.lambda_functions
 
-  cors_configuration {
+  function_name      = aws_lambda_function.api[each.key].function_name
+  authorization_type = "NONE"
+
+  cors {
     allow_credentials = false
     allow_headers     = ["content-type", "authorization"]
     allow_methods     = ["GET", "POST", "OPTIONS"]
     allow_origins     = ["*"]
   }
-}
-
-resource "aws_apigatewayv2_stage" "default" {
-  api_id      = aws_apigatewayv2_api.http.id
-  name        = "$default"
-  auto_deploy = true
-}
-
-resource "aws_apigatewayv2_integration" "lambda" {
-  for_each = local.lambda_functions
-
-  api_id                 = aws_apigatewayv2_api.http.id
-  integration_type       = "AWS_PROXY"
-  integration_method     = "POST"
-  integration_uri        = aws_lambda_function.api[each.key].invoke_arn
-  payload_format_version = "2.0"
-}
-
-resource "aws_apigatewayv2_route" "api" {
-  for_each = local.api_routes
-
-  api_id    = aws_apigatewayv2_api.http.id
-  route_key = each.key
-  target    = "integrations/${aws_apigatewayv2_integration.lambda[each.value].id}"
-}
-
-resource "aws_lambda_permission" "api_gateway" {
-  for_each = local.lambda_functions
-
-  statement_id  = "AllowAPIGatewayInvoke-${each.key}"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.api[each.key].function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.http.execution_arn}/*/*"
 }
