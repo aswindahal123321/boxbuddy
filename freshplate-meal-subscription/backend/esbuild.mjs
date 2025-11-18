@@ -23,10 +23,10 @@ await Promise.all(
 
 await build({
   entryPoints: ["src/server.ts"],
-  outfile: "dist/server/index.mjs",
+  outfile: "dist/server/index.cjs",
   bundle: true,
   platform: "node",
-  format: "esm",
+  format: "cjs",
   target: "node20",
   sourcemap: false,
   external: [],

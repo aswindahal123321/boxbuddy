@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "build": "node esbuild.mjs",
-    "start:server": "node dist/server/index.mjs"
+    "start:server": "node dist/server/index.cjs"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.645.0",
