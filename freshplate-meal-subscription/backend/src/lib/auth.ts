@@ -20,15 +20,22 @@ export const issueToken = (payload: Record<string, unknown>, expiresIn = "7d") =
   return jwt.sign(payload, JWT_SECRET, { expiresIn });
 };
 
-export const getAuthContext = (event: APIGatewayProxyEventV2) => {
-  const header = event.headers?.authorization || event.headers?.Authorization;
-  if (!header) return null;
-  const [, token] = header.split(" ");
-  if (!token) return null;
+export const verifyJwt = (token: string) => {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as Record<string, unknown>;
-    return decoded;
+    return jwt.verify(token, JWT_SECRET) as Record<string, unknown>;
   } catch {
     return null;
   }
+};
+
+export const decodeAuthHeader = (header?: string | null) => {
+  if (!header) return null;
+  const [scheme, token] = header.split(" ");
+  if (!token || scheme.toLowerCase() !== "bearer") return null;
+  return verifyJwt(token);
+};
+
+export const getAuthContext = (event: APIGatewayProxyEventV2) => {
+  const header = event.headers?.authorization || event.headers?.Authorization;
+  return decodeAuthHeader(header);
 };
