@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: 123456789012.dkr.ecr.us-east-1.amazonaws.com/freshplate-backend:latest
+          image: 776716168530.dkr.ecr.us-east-1.amazonaws.com/freshplate-backend:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
