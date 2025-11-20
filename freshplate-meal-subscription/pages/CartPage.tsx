@@ -10,8 +10,8 @@ const MinusIcon: React.FC<{ className?: string }> = (props) => (
 
 interface CartPageProps {
   cart: CartItem[];
-  removeFromCart: (productId: string) => void;
-  updateCartQuantity: (productId: string, newQuantity: number) => void;
+  removeFromCart: (productId: number) => void;
+  updateCartQuantity: (productId: number, newQuantity: number) => void;
   setCurrentPage: (page: string) => void;
   isAuthenticated: boolean;
   setPageBeforeLogin: (page: string) => void;

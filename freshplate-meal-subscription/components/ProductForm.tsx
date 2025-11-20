@@ -3,7 +3,7 @@ import type { Product } from '../types';
 
 interface ProductFormProps {
   product: Product | null;
-  onSave: (product: Omit<Product, 'id'>, productId?: string) => void;
+  onSave: (product: Product) => void;
   onCancel: () => void;
 }
 
@@ -17,25 +17,11 @@ const emptyProduct: Omit<Product, 'id'> = {
 };
 
 export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) => {
-  const [formData, setFormData] = useState<Omit<Product, 'id'>>(product ? {
-    name: product.name,
-    description: product.description,
-    price: product.price,
-    imageUrl: product.imageUrl,
-    category: product.category,
-    calories: product.calories,
-  } : emptyProduct);
+  const [formData, setFormData] = useState(product || emptyProduct);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
-    const initialData = product ? {
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      imageUrl: product.imageUrl,
-      category: product.category,
-      calories: product.calories,
-    } : emptyProduct;
+    const initialData = product || emptyProduct;
     setFormData(initialData);
     setImagePreview(initialData.imageUrl || null);
   }, [product]);
@@ -64,7 +50,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCan
         alert('Please upload an image for the meal.');
         return;
     }
-    onSave(formData, product?.id);
+    onSave({ ...formData, id: product?.id || 0 });
   };
 
   return (

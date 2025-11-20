@@ -15,7 +15,7 @@ These manifests deploy the Express version of the backend on any Kubernetes clus
    docker build -t <account>.dkr.ecr.<region>.amazonaws.com/freshplate-backend:latest .
    docker push <account>.dkr.ecr.<region>.amazonaws.com/freshplate-backend:latest
    ```
-2. Update `backend-deployment.yaml` with the pushed image URI and DynamoDB table names (`USERS_TABLE`, `ORDERS_TABLE`, `PRODUCTS_TABLE`). Make sure the secret includes both `jwtSecret` and `adminBypassToken`.
+2. Update `backend-deployment.yaml` with the pushed image URI and DynamoDB table names.
 3. Apply the resources:
    ```bash
    kubectl apply -f infrastructure/k8s/backend-secret.yaml

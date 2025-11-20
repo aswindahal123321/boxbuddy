@@ -2,7 +2,7 @@ import type { Product, User } from './types';
 
 export const INITIAL_PRODUCTS: Product[] = [
   {
-    id: '1',
+    id: 1,
     name: 'Lemon Herb Salmon',
     description: 'Sustainably-sourced Atlantic salmon fillet, pan-seared to perfection with a flaky texture. It\'s seasoned with a vibrant mix of fresh dill, parsley, and a squeeze of lemon, then served on a bed of fluffy quinoa and alongside tender-crisp roasted asparagus. A light, refreshing, and protein-packed meal. (Approx. 40g Protein, 30g Carbs, 18g Fat)',
     price: 14.99,
@@ -11,7 +11,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     calories: 450,
   },
   {
-    id: '2',
+    id: 2,
     name: 'Vegan Buddha Bowl',
     description: 'A colorful and nourishing bowl designed to delight your senses. It features roasted sweet potatoes, protein-rich chickpeas, creamy avocado slices, and crisp red cabbage on a bed of mixed greens. Drizzled with our signature creamy tahini-lemon dressing and a sprinkle of sesame seeds for extra crunch. (Approx. 18g Protein, 65g Carbs, 22g Fat)',
     price: 12.50,
@@ -20,7 +20,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     calories: 520,
   },
   {
-    id: '3',
+    id: 3,
     name: 'Classic Beef Stir-fry',
     description: 'Tender strips of grass-fed beef, wok-seared with a colorful medley of broccoli florets, bell peppers, and snap peas. Everything is tossed in a savory, house-made soy-ginger sauce with a hint of garlic. Served over fluffy jasmine rice for a satisfying and flavorful classic. (Approx. 35g Protein, 50g Carbs, 20g Fat)',
     price: 13.75,
@@ -29,7 +29,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     calories: 550,
   },
   {
-    id: '4',
+    id: 4,
     name: 'Grilled Chicken & Veggies',
     description: 'Juicy, marinated chicken breast grilled to perfection for that perfect smoky flavor. It\'s paired with a vibrant assortment of seasonal vegetables, including zucchini, bell peppers, and red onion, all lightly seasoned and roasted to bring out their natural sweetness. A clean and classic high-protein meal. (Approx. 45g Protein, 20g Carbs, 15g Fat)',
     price: 13.25,
@@ -38,7 +38,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     calories: 420,
   },
     {
-    id: '5',
+    id: 5,
     name: 'Spicy Tofu Scramble',
     description: 'A hearty, plant-based breakfast-for-dinner option. Firm organic tofu is crumbled and scrambled with nutrient-rich black beans, sweet corn, and onions. A touch of chipotle and turmeric gives it a smoky kick and a beautiful golden hue. A fantastic vegan source of protein. (Approx. 25g Protein, 30g Carbs, 18g Fat)',
     price: 11.99,
@@ -47,7 +47,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     calories: 380,
   },
   {
-    id: '6',
+    id: 6,
     name: 'Teriyaki Chicken Bowl',
     description: 'Tender pieces of chicken thigh marinated in our authentic, house-made teriyaki sauce—a perfect balance of sweet and savory. Served with steamed broccoli florets and carrots on a foundation of fluffy white rice, then garnished with sesame seeds. A comforting and delicious meal. (Approx. 38g Protein, 70g Carbs, 16g Fat)',
     price: 13.50,
@@ -58,13 +58,19 @@ export const INITIAL_PRODUCTS: Product[] = [
 ];
 
 export const ADMIN_USER: User = {
-  id: 'admin',
+  id: 999,
   name: 'Admin',
   email: 'admin@gmail.com',
+  password: 'admin',
   role: 'admin',
 };
 
-export const ADMIN_CREDENTIALS = {
-  email: 'admin@gmail.com',
-  password: 'admin',
-};
+export const INITIAL_USERS: User[] = [
+  {
+    id: 101,
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+    password: 'password123',
+    role: 'user',
+  },
+];

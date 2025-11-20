@@ -1,5 +1,5 @@
 export interface Product {
-  id: string;
+  id: number;
   name: string;
   description: string;
   price: number;
@@ -16,7 +16,7 @@ export type OrderStatus = 'Processing' | 'Packaged' | 'Shipped' | 'Delivered' | 
 
 export interface Order {
   id: number;
-  userId: string;
+  userId: number;
   referenceNumber: string;
   items: CartItem[];
   totalAmount: number;
@@ -33,8 +33,9 @@ export interface Subscription {
 }
 
 export interface User {
-  id: string;
+  id: number;
   name: string;
   email: string;
+  password: string; // In a real app, this should be a hash
   role: 'user' | 'admin';
 }

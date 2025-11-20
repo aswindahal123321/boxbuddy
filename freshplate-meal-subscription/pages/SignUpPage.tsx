@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 interface SignUpPageProps {
-  onSignUp: (name: string, email: string, password: string) => Promise<boolean>;
+  onSignUp: (name: string, email: string, password: string) => boolean;
   setCurrentPage: (page: string) => void;
 }
 
@@ -11,13 +11,13 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({ onSignUp, setCurrentPage
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       alert("Passwords do not match.");
       return;
     }
-    await onSignUp(name, email, password);
+    onSignUp(name, email, password);
   };
 
   return (
