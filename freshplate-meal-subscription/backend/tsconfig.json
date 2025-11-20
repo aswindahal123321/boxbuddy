@@ -8,9 +8,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "types": [
-      "aws-lambda"
-    ],
     "rootDir": "src"
   },
   "include": ["src"]

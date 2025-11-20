@@ -22,4 +22,4 @@ These manifests deploy the Express version of the backend on any Kubernetes clus
    kubectl apply -f infrastructure/k8s/backend-deployment.yaml
    kubectl apply -f infrastructure/k8s/backend-service.yaml
    ```
-4. Retrieve the external IP from `kubectl get svc freshplate-backend` and use it as the API base URL (endpoints mirror the Lambda handlers).
+4. Retrieve the external IP from `kubectl get svc freshplate-backend` and use it as `VITE_EXPRESS_BASE_URL` in the frontend.

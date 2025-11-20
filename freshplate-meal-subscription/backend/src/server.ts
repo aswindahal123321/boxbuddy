@@ -11,6 +11,9 @@ const ORDERS_TABLE = process.env.ORDERS_TABLE ?? "";
 if (!USERS_TABLE) {
   console.warn("USERS_TABLE env var is not set. Express API will fail.");
 }
+if (!ORDERS_TABLE) {
+  console.warn("ORDERS_TABLE env var is not set. Order routes will fail.");
+}
 
 const app = express();
 app.use(cors());

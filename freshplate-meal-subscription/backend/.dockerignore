@@ -1,9 +1,3 @@
 node_modules
 npm-debug.log
-dist/*.zip
-dist/signup
-dist/login
-dist/me
-dist/createOrder
-dist/listOrders
-dist/server
+dist

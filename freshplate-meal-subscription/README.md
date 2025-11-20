@@ -13,38 +13,33 @@ View your app in AI Studio: https://ai.studio/apps/drive/1T9mVuWqLgn7_Jmtrayp4I2
 **Prerequisites:** Node.js 20+, npm
 
 1. Install dependencies: `npm install`
-2. Duplicate `.env.example` to `.env.local` and fill in the Lambda Function URLs that Terraform prints (`terraform output lambda_function_urls`). If you run the Express API (Docker/K8s), set `VITE_EXPRESS_BASE_URL` instead.
+2. Duplicate `.env.example` to `.env.local` and set `VITE_EXPRESS_BASE_URL` to the URL where your Express API runs (Cloud9 preview, EC2, Kubernetes, etc.).
 3. Start the app: `npm run dev`
 
-## Backend (Lambdas + Express)
+## Backend (Express API)
 
 ```
 cd freshplate-meal-subscription/backend
 npm install
 npm run build
-for fn in signup login me createOrder listOrders; do \
-  zip -jr "dist/${fn}.zip" "dist/${fn}"; \
-done
+npm run start:server   # requires USERS_TABLE, ORDERS_TABLE, JWT_SECRET env vars
 ```
 
-- Use `npm run start:server` to run the Express API locally (uses the same DynamoDB tables).
-- `Dockerfile` builds the Express API container; see `infrastructure/k8s/` for manifests.
+- Ensure the DynamoDB tables (`boxbuddy-users`, `boxbuddy-orders`) exist once in your AWS account—after that the API populates them automatically via signup/admin flows.
+- `Dockerfile` builds the Express API container; deploy it anywhere that has DynamoDB permissions (EC2, ECS, EKS, etc.).
+- Edit the Kubernetes manifests under `infrastructure/k8s/` to point at your ECR image and table names.
 
-## Terraform (S3 + CloudFront + DynamoDB + Lambda)
+## Terraform (S3 + CloudFront only)
 
 ```
 cd freshplate-meal-subscription/terraform
 terraform init
-terraform apply \
-  -var="frontend_bucket_name=<existing-bucket>" \
-  -var="lambda_artifact_bucket=<existing-bucket>" \
-  -var="jwt_secret=<random-string>"
+terraform apply -var="frontend_bucket_name=<existing-bucket>"
 ```
 
 Outputs:
 - `cloudfront_domain` – CDN URL serving the Vite build (sync `dist/` to your bucket).
-- `lambda_function_urls` – map of public endpoints for each handler; copy them into `.env.local`.
-- `users_table_name` / `orders_table_name` – DynamoDB resources for IAM policies and Kubernetes deployments.
+- `cloudfront_oai` – add this identity to the S3 bucket policy so CloudFront can read files.
 
 ## Docker & Kubernetes
 
@@ -62,4 +57,4 @@ kubectl apply -f infrastructure/k8s/backend-deployment.yaml
 kubectl apply -f infrastructure/k8s/backend-service.yaml
 ```
 
-Update the Deployment with your image URI and table names. The Service exposes port 80 -> 8080; use the external IP as the API base URL when not relying on Lambda Function URLs.
+Update the Deployment with your image URI, table names, and JWT secret. The Service exposes port 80 -> 8080; use the external IP as the API base URL in `.env.local`.
