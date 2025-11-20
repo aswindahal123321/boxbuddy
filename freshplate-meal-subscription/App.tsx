@@ -14,8 +14,19 @@ import { TrackOrderPage } from './pages/TrackOrderPage';
 import { UserDashboardPage } from './pages/UserDashboardPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
-import { INITIAL_PRODUCTS, INITIAL_USERS, ADMIN_USER } from './constants';
+import { INITIAL_PRODUCTS, ADMIN_USER, ADMIN_CREDENTIALS } from './constants';
 import type { Product, CartItem, Order, Subscription, OrderStatus, User } from './types';
+import { authApi, productApi } from './services/api';
+
+const TOKEN_KEY = 'freshplate_token';
+const ADMIN_BYPASS_TOKEN = import.meta.env.VITE_ADMIN_TOKEN || 'admin-local-token';
+
+const mapBackendUser = (user: { userId: string; name: string; email: string; role: 'user' | 'admin' }): User => ({
+  id: user.userId,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+});
 
 const App: React.FC = () => {
   // Product State
@@ -33,8 +44,8 @@ const App: React.FC = () => {
 
 
   // Auth State
-  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   
   // App Data State
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -62,63 +73,92 @@ const App: React.FC = () => {
     setCurrentPage(page);
   }
 
+  const hydrateProfile = async (token: string) => {
+    try {
+      const profile = await authApi.profile(token);
+      setCurrentUser(mapBackendUser(profile.user));
+      // Future phases: map profile.orders/subscriptions to state
+    } catch (err) {
+      console.error('Failed to load profile', err);
+      localStorage.removeItem(TOKEN_KEY);
+      setCurrentUser(null);
+    }
+  };
+
+  const loadProducts = async () => {
+    try {
+      const result = await productApi.list();
+      setProducts(result.products.map((p) => {
+        const generatedId = String((p as any).id ?? (p as any).productId ?? `${p.name}-${Math.random().toString(36).slice(2)}`);
+        return {
+          id: generatedId,
+          name: p.name,
+          description: p.description,
+          price: p.price,
+          imageUrl: p.imageUrl,
+          category: p.category,
+          calories: p.calories,
+        };
+      }));
+    } catch (err) {
+      console.error('Failed to load products', err);
+    }
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    loadProducts();
+    if (!token) {
+      setIsAuthLoading(false);
+      return;
+    }
+    hydrateProfile(token).finally(() => setIsAuthLoading(false));
+  }, []);
+
   // Authentication Handlers
-  const handleLogin = (email: string, password: string): boolean => {
-    const isAdminLogin = email === ADMIN_USER.email && password === ADMIN_USER.password;
+  const handleLogin = async (email: string, password: string): Promise<boolean> => {
+    const isAdminLogin = email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password;
     if (isAdminLogin) {
+      localStorage.setItem(TOKEN_KEY, ADMIN_BYPASS_TOKEN);
       setCurrentUser(ADMIN_USER);
       navigate('admin');
       alert('Logged in as Admin successfully!');
       return true;
     }
 
-    const foundUser = users.find(u => u.email === email && u.password === password);
-    if (foundUser) {
-      setCurrentUser(foundUser);
-      
-      // Find and set active subscription for the logged-in user
-      const userOrders = orders.filter(o => o.userId === foundUser.id);
-      const userOrderIds = userOrders.map(o => o.id);
-      const userSubscriptions = subscriptions.filter(s => userOrderIds.includes(s.orderId));
-      
-      const stillActiveSubscriptions = userSubscriptions.filter(s => new Date() < new Date(s.endDate));
-
-      if (stillActiveSubscriptions.length > 0) {
-        // Get the most recent one
-        const latestActiveSub = stillActiveSubscriptions.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())[0];
-        setActiveSubscription(latestActiveSub);
-      } else {
-        setActiveSubscription(null);
-      }
-      
+    try {
+      const { token } = await authApi.login({ email, password });
+      localStorage.setItem(TOKEN_KEY, token);
+      await hydrateProfile(token);
+      // TODO: fetch user-specific orders/subscriptions from backend
       navigate(pageBeforeLogin || 'home');
       setPageBeforeLogin(null);
       return true;
-    }
-    
-    alert('Invalid credentials. Please try again.');
-    return false;
-  };
-
-  const handleSignUp = (name: string, email: string, password: string): boolean => {
-    if (users.some(u => u.email === email) || email === ADMIN_USER.email) {
-      alert('An account with this email already exists.');
+    } catch (err) {
+      alert((err as Error).message || 'Invalid credentials. Please try again.');
       return false;
     }
-    const newUser: User = {
-      id: Date.now(),
-      name,
-      email,
-      password,
-      role: 'user',
-    };
-    setUsers([...users, newUser]);
-    setCurrentUser(newUser);
-    navigate('home');
-    return true;
+  };
+
+  const handleSignUp = async (name: string, email: string, password: string): Promise<boolean> => {
+    if (email === ADMIN_CREDENTIALS.email) {
+      alert('This email is reserved for admin use.');
+      return false;
+    }
+    try {
+      const { token } = await authApi.signUp({ name, email, password });
+      localStorage.setItem(TOKEN_KEY, token);
+      await hydrateProfile(token);
+      navigate('home');
+      return true;
+    } catch (err) {
+      alert((err as Error).message || 'Unable to sign up. Please try again.');
+      return false;
+    }
   };
 
   const handleLogout = () => {
+    localStorage.removeItem(TOKEN_KEY);
     setCurrentUser(null);
     setActiveSubscription(null);
     navigate('home');
@@ -130,17 +170,8 @@ const App: React.FC = () => {
 
   const handleConfirmDeleteAccount = () => {
     if (currentUser) {
-        if (activeSubscription) {
-            setSubscriptions(prevSubs => prevSubs.filter(sub => sub.id !== activeSubscription.id));
-            setActiveSubscription(null);
-        }
-        setUsers(users.filter(u => u.id !== currentUser.id));
-        alert('Your account has been deleted successfully. We are sorry to see you go.');
-        
-        // Reset state and navigate
+        alert('Account deletion is not supported in this preview.');
         setIsDeleteAccountConfirmOpen(false);
-        setCurrentUser(null);
-        navigate('home');
     }
   };
 
@@ -160,13 +191,23 @@ const App: React.FC = () => {
     setEditingProduct(null);
   };
 
-  const handleSaveProduct = (product: Product) => {
-    if (editingProduct && product.id) {
-      setProducts(products.map(p => p.id === product.id ? product : p));
-    } else {
-      setProducts([...products, { ...product, id: Date.now() }]);
+  const handleSaveProduct = async (product: Omit<Product, 'id'>, productId?: string) => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) {
+      alert('You must be logged in as admin to manage products.');
+      return;
     }
-    handleCloseModal();
+    try {
+      if (productId) {
+        await productApi.update(token, productId, product);
+      } else {
+        await productApi.create(token, product);
+      }
+      await loadProducts();
+      handleCloseModal();
+    } catch (err) {
+      alert((err as Error).message || 'Unable to save meal.');
+    }
   };
 
   const handleViewProduct = (product: Product) => {
@@ -194,11 +235,11 @@ const App: React.FC = () => {
     alert(`${quantity} x ${product.name} added to cart!`);
   };
 
-  const removeFromCart = (productId: number) => {
+  const removeFromCart = (productId: string) => {
     setCart(cart.filter(item => item.id !== productId));
   };
   
-  const updateCartQuantity = (productId: number, newQuantity: number) => {
+  const updateCartQuantity = (productId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
       removeFromCart(productId);
     } else {
@@ -290,6 +331,14 @@ const App: React.FC = () => {
 
 
   const renderPage = () => {
+    if (isAuthLoading) {
+      return (
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <p className="text-slate-500">Loading your experience...</p>
+        </div>
+      );
+    }
+
     if (isAdmin) {
       return <AdminDashboard 
         products={products}

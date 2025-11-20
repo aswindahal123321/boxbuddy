@@ -27,11 +27,20 @@ spec:
               value: "boxbuddy-users"
             - name: ORDERS_TABLE
               value: "boxbuddy-orders"
+            - name: PRODUCTS_TABLE
+              value: "boxbuddy-products"
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: freshplate-backend-secrets
                   key: jwtSecret
+            - name: ADMIN_BYPASS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: freshplate-backend-secrets
+                  key: adminBypassToken
+            - name: ADMIN_BYPASS_EMAIL
+              value: "admin@gmail.com"
           readinessProbe:
             httpGet:
               path: /healthz

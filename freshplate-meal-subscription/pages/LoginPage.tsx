@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 interface LoginPageProps {
-  onLogin: (email: string, password: string) => boolean;
+  onLogin: (email: string, password: string) => Promise<boolean>;
   setCurrentPage: (page: string) => void;
 }
 
@@ -10,9 +10,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, setCurrentPage })
   const [password, setPassword] = useState('');
   const [isAdminLogin, setIsAdminLogin] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin(email, password);
+    await onLogin(email, password);
   };
   
   const toggleLoginMode = () => {
